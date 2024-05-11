@@ -8,18 +8,17 @@ namespace PlayFab.AzureFunctions
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Extensions.Logging;
     using PlayFab.Internal;
     using PlayFab.Json;
     using PlayFab.ProfilesModels;
+    using Microsoft.Azure.Functions.Worker;
+    using Microsoft.AspNetCore.Mvc;
 
     public static class LocalExecuteFunction
     {
@@ -36,8 +35,8 @@ namespace PlayFab.AzureFunctions
         /// <param name="httpRequest">The HTTP request</param>
         /// <param name="log">A logger object</param>
         /// <returns>The function execution result(s)</returns>
-        [FunctionName("ExecuteFunction")]
-        public static async Task<HttpResponseMessage> ExecuteFunction(
+        [Function("ExecuteFunction")]
+        public static async Task<IActionResult> ExecuteFunction(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "CloudScript/ExecuteFunction")] HttpRequest request, ILogger log)
         {
             // Extract the caller's entity token
@@ -112,11 +111,7 @@ namespace PlayFab.AzureFunctions
                     // Serialize the output and return it
                     var outputStr = PlayFabSimpleJson.SerializeObject(output);
 
-                    return new HttpResponseMessage
-                    {
-                        Content = CompressResponseBody(output, request),
-                        StatusCode = HttpStatusCode.OK
-                    };
+                    return new OkObjectResult(outputStr);
                 }
             }
         }
